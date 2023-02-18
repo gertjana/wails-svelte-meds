@@ -14,6 +14,7 @@
 
 <script lang="ts">
   import { GetNames, Medications, Save }  from '../wailsjs/go/main/App'
+  import type { Medication } from './Medication.svelte';
 
   import { null_to_empty } from 'svelte/internal';
   import { fly, fade } from 'svelte/transition';
@@ -22,29 +23,47 @@
 
   import Row from './Row.svelte';
   import Confirm from './Confirm.svelte';
-  import Dialog, { showDialog, closeDialog, ref } from "./Dialog.svelte";
+  import Dialog, { showDialog, closeDialog, clearForm, ref } from "./Dialog.svelte";
 
-  let not_saved: boolean = false;
-  let message: string = "";
-  let meds = [];
+  let meds: Medication[] = [];
   let names: string[] = [];
 
+  let unsaved: boolean = false;
+  const markUnsaved = (un: boolean) => {
+    unsaved = un 
+  }
+  
+  let message: string = "";
   const displayMessage = (msg: string) => {
     message = msg;
     if (msg != "") { setTimeout(() => { message = ""; }, 5000); }
   } 
-
   displayMessage("Welcome to the Medication Overview page");
-  
-  const deleteMed = (med) => {
+
+  const deleteMed = (med: Medication) => {
     meds = meds.filter(m => m.name != med.name);
 
-    not_saved = true;
+    markUnsaved(true);
   }
 
-  const saveMeds = (meds, selected) => {
+  const addMed = () => {
+    clearForm("medication-dialog");
+    showDialog("medication-dialog", true);
+  }
+
+  const editMed = (med: Medication) => {
+    console.log("EditMed");
+    showDialog("medication-dialog", true);
+    let currentDialog: HTMLDialogElement = ref("medication-dialog"); 
+    (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
+    (<HTMLInputElement>currentDialog.querySelector("#amount")).value =  med.amount.toString();
+    (<HTMLInputElement>currentDialog.querySelector("#dosage")).value = med.dosage.toString();
+    (<HTMLInputElement>currentDialog.querySelector("#stock")).value = med.stock.toString();
+  } 
+
+  const saveMeds = (meds: Medication[], selected: string) => {
     Save(meds, selected).then(() => {
-      not_saved = false;
+      markUnsaved(false);
       displayMessage("Saved");
     });
   }  
@@ -63,38 +82,45 @@
     return parseFloat(value);
   }
 
-  const toInt = (value) => {
-    if (value === "" || value === null || value === undefined) { return 0; }
-    return parseInt(value);
-  }
+  const findIndexByProperty = (data: any[], key: string, value: any) => {
+    for (var i = 0; i < data.length; i++) {
+        if (data[i][key] == value) {
+            return i;
+        }
+    }
+    return -1;
+}
 
-  const getValue = (id) => {
-    let currentDialog: HTMLDialogElement = ref("add-dialog"); 
-    return (<HTMLInputElement>currentDialog.querySelector(id)).value;
-  }
-
-  const handleSubmitAdd = () => {
-    closeDialog("add-dialog");
-    let currentDialog: HTMLDialogElement = ref("add-dialog"); 
+  const handleSubmit = (d: string) => {
+    closeDialog(d);
+    let currentDialog: HTMLDialogElement = ref(d); 
     let med = {
-      name:   getValue('#name'),
-      amount: toFloat(getValue('#amount')),
-      dosage: toFloat(getValue('#dosage')),
-      stock:  toInt(getValue('#stock')),
+      name:   (<HTMLInputElement>currentDialog.querySelector('#name')).value,
+      amount: toFloat((<HTMLInputElement>currentDialog.querySelector('#amount')).value),
+      dosage: toFloat((<HTMLInputElement>currentDialog.querySelector('#dosage')).value),
+      stock:  toFloat((<HTMLInputElement>currentDialog.querySelector('#stock')).value),
       last_updated: new Date().toDateString(),
       unit: "mg"
     };
-    meds.push(med);
+
+    let i: number = findIndexByProperty(meds, "name", med.name);
+    if (i >= 0) {
+      meds[i] = med;
+    } else {
+      meds.push(med);
+    }
+    markUnsaved(true);
 
     meds = meds;
   }
-
 </script>
 
 <main>
   <div class="container">
     <div class="top-bar">
       <div class="title">Medication Overview</div>
+      <div class="modified">
+        {#if unsaved}<Icon.StarOfLifeSolid size="10"/>{/if}</div>
       <div class="selected">User: <span class="name">{selected}</span></div>
       <div class="message" contenteditable="false"  bind:innerHTML={message}>messages appear here</div>
     </div>
@@ -109,7 +135,7 @@
           {#each meds as med, i}
             <Row bind:value={med} selected={selected}>
               <span class="row-buttons">
-                <Icon.PencilSolid size="20" color="#87cefa" />
+                <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
                 <Confirm confirmTitle="Delete" cancelTitle="Cancel" let:confirm="{confirmThis}">
                   <button on:click={() => confirmThis(deleteMed, med)}>
                     <Icon.TrashCanSolid size="20" color="#87cefa" />
@@ -127,7 +153,7 @@
           <tr>
             <td colspan="9">
               <div class="buttonrow">
-                <button on:click={() => showDialog("add-dialog", true)}>
+                <button on:click={() => addMed()}>
                   <Icon.PlusSolid  size="20" color="#87cefa" />
                 </button>
                 <button on:click={() => saveMeds(meds, selected)}>
@@ -142,7 +168,7 @@
     </div>
 
 
-  <Dialog name="add-dialog">
+  <Dialog name="medication-dialog">
     <div
       class="overlay"
       in:fade="{{ duration: 200 }}"
@@ -152,18 +178,18 @@
       <div class="header">
         <h3>Add new Medication</h3>
       </div>
-      <form method="dialog" on:submit|preventDefault={handleSubmitAdd}>
+      <form method="dialog" on:submit|preventDefault={() => handleSubmit("medication-dialog")}>
         <div class="row">
           <label for="name">Name:</label><input type="text" id="name" placeholder="Name" />
         </div>
         <div class="row">
-          <label for="stock">Stock:</label><input type="number" id="stock" placeholder="0" />
-          <label for="amount">Amount:</label><input type="number" id="amount" placeholder="0" />
-          <label for="dosage">Dosage:</label><input type="number" id="dosage" placeholder="0" />
+          <label for="stock">Stock:</label><input type="number" step="0.5" id="stock" placeholder="0" />
+          <label for="amount">Amount:</label><input type="number" step="0.5" id="amount" placeholder="0" />
+          <label for="dosage">Dosage:</label><input type="number" step="0.5" id="dosage" placeholder="0" />
         </div>
         <div class="buttonrow">
             <button type="submit" value="ok"><Icon.CheckSolid color="#87cefa"/></button>
-            <button type="button" on:click={() => closeDialog("add-dialog")}><Icon.BanSolid color="#87cefa"/></button>
+            <button type="button" on:click={() => closeDialog("medication-dialog")}><Icon.BanSolid color="#87cefa"/></button>
         </div>
       </form>
     </div>
@@ -192,7 +218,6 @@
   }
 
   .container .top-bar .title {
-    flex-direction: row;
     font-family: Geneva, Verdana, sans-serif;
     font-size: 1.2em;
     font-weight: bold;
@@ -209,7 +234,6 @@
   .container .top-bar .message {
     color: lightskyblue;
     width:500px;
-    border: 1px solid black;
   }
 
   .container .content {

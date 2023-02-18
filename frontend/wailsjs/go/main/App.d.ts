@@ -10,4 +10,4 @@ export function Medications(arg1:string):Promise<Array<main.Medication>>;
 
 export function Save(arg1:Array<main.Medication>,arg2:string):Promise<void>;
 
-export function UpdateStock(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+export function UpdateStock(arg1:string,arg2:string,arg3:number,arg4:string):Promise<void>;

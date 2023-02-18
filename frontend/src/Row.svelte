@@ -1,12 +1,16 @@
 <script lang="ts">
   import { UpdateStock }  from '../wailsjs/go/main/App'
-  
-  export let value: any; // TODO figure out Medication type
+
+  import type { Medication } from './Medication.svelte'
+
+  export let value: Medication; // TODO figure out Medication type
 
   export let selected: string;
 
-  const addStock = (name: string, med_name: string, value: string) => {
-    UpdateStock(name, med_name, value, new Date().toDateString());  
+  const addStock = (name: string, med_name: string, new_stock: number) => {
+    UpdateStock(name, med_name, new_stock, new Date().toDateString());  
+
+    value.last_updated = new Date().toDateString();
   }
   
   const expiryDate = (med: any) => {
@@ -29,6 +33,11 @@
     }
   }
 
+  const toFloat = (value: string) => {
+    if (value === "" || value === null || value === undefined) { return 0.0; }
+    return parseFloat(value);
+  }
+
 </script>
 
 <tr>
@@ -36,7 +45,7 @@
     <td>{value.amount} {value.unit}</td>
     <td>{value.dosage}</td>
     <td>
-      <input type="number" step="0.1" on:change={() => addStock(selected, value.name, value.stock)} bind:value={value.stock}/>
+      <input type="number" step="0.5" on:change={() => addStock(selected, value.name, value.stock)} bind:value={value.stock}/>
     </td>
     <td>
       <small><i contenteditable="false" bind:innerHTML={value.last_updated}>{value.last_updated}</i></small>

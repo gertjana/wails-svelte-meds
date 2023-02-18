@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"strconv"
 	"os"
   // "fmt"
 )
@@ -62,11 +61,10 @@ func (a *App) Medications(name string) []Medication {
 	return medications[name]
 }
 
-func (a *App) UpdateStock(name string, med_name, stock string, date string) {
-	var amount, _ = strconv.ParseFloat(stock, 64)
+func (a *App) UpdateStock(name string, med_name string, stock float64, date string) {
 	for i, med := range medications[name] {
 		if med.Name == med_name {
-			medications[name][i].Stock = amount
+			medications[name][i].Stock = stock
       medications[name][i].LastUpdated = date
 		}
 	}

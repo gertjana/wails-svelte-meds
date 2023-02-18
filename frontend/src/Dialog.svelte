@@ -2,16 +2,26 @@
 
   let dialogs: { [key: string]: HTMLDialogElement } = {};
 
-  export const showDialog = (n: string, asModal: boolean) => {
-    dialogs[n][asModal ? "showModal" : "show"]();
+  /**
+   * Show the dialog with the given name
+   * @param name name of the dialog
+   * @param asModal if true, show as modal
+   */
+  export const showDialog = (name: string, asModal: boolean) => {
+    dialogs[name][asModal ? "showModal" : "show"]();
   }
 
-  export const closeDialog = (n: string) => {
-    dialogs[n].close();
+  export const closeDialog = (name: string) => {
+    dialogs[name].close();
   }
 
-  export const ref = (n: string) => {
-    return dialogs[n];
+
+  export const clearForm = (name: string) => {
+    (<HTMLFormElement>dialogs[name].querySelector("form")).reset();
+  }
+
+  export const ref = (name: string) => {
+    return dialogs[name];
   } 
 </script>
 
