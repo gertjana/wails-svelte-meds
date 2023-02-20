@@ -1,9 +1,9 @@
 <script lang="ts">
   import { UpdateStock }  from '../wailsjs/go/main/App'
-
   import type { Medication } from './Medication.svelte'
+  import { stockToday, daysLeft, expiryDate } from './Medication.svelte'
 
-  export let value: Medication; // TODO figure out Medication type
+  export let value: Medication; 
 
   export let selected: string;
 
@@ -12,32 +12,6 @@
 
     value.last_updated = new Date().toDateString();
   }
-  
-  const expiryDate = (med: any) => {
-    let date: Date = new Date();
-    date.setDate(date.getDate() + daysLeft(med));
-    return date.toDateString();
-  }
-
-  const stockToday = (med) => {
-    let days: number = Math.round((new Date().getTime() - new Date(med.last_updated).getTime()) / (1000 * 60 * 60 * 24));
-    return med.stock - (days * med.dosage);
-  }
-
-  const daysLeft = (med) => {
-    if (med.dosage > 0) {
-      let stock_today: number = stockToday(med);
-      return Math.round(stock_today / med.dosage);
-    } else {
-      return 0;
-    }
-  }
-
-  const toFloat = (value: string) => {
-    if (value === "" || value === null || value === undefined) { return 0.0; }
-    return parseFloat(value);
-  }
-
 </script>
 
 <tr>
