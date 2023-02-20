@@ -131,37 +131,43 @@
         <p>You can update the stock whenever you receive new medications<br/>
           The Stock Today, Days Left and Expiry Date are calculated from the day the stock got updated last.</p>
         <table>
-            <tr><th>Name</th><th>Amount</th><th>Dosage</th><th>Stock</th><th>Last Updated</th><th class="spacer"></th><th>StockToday</th><th>Days Left</th><th>Expires</th></tr>
-          {#each meds as med, i}
-            <Row bind:value={med} selected={selected}>
-              <span class="row-buttons">
-                <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
-                <Confirm confirmTitle="Delete" cancelTitle="Cancel" let:confirm="{confirmThis}">
-                  <button on:click={() => confirmThis(deleteMed, med)}>
-                    <Icon.TrashCanSolid size="20" color="#87cefa" />
-                    </button> 
-                  <span slot="title">
-                    Delete this item?
-                  </span>
-                  <span slot="description">
-                    You won't be able to revert this!
-                  </span>
-                </Confirm>
-              </span>
-            </Row>
-          {/each}
-          <tr>
-            <td colspan="9">
-              <div class="buttonrow">
-                <button on:click={() => addMed()}>
-                  <Icon.PlusSolid  size="20" color="#87cefa" />
-                </button>
-                <button on:click={() => saveMeds(meds, selected)}>
-                  <Icon.FloppyDiskSolid  size="20" color="#87cefa" />
-                </button>
-              </div>
-            </td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Name</th><th>Amount</th><th>Dosage</th><th>Stock</th><th>Last Updated</th><th class="spacer"></th><th>StockToday</th><th>Days Left</th><th>Expires</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each meds as med, i}
+              <Row bind:value={med} selected={selected}>
+                <span class="row-buttons">
+                  <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
+                  <Confirm confirmTitle="Delete" cancelTitle="Cancel" let:confirm="{confirmThis}">
+                    <button on:click={() => confirmThis(deleteMed, med)}>
+                      <Icon.TrashCanSolid size="20" color="#87cefa" />
+                      </button> 
+                    <span slot="title">
+                      Delete this item?
+                    </span>
+                    <span slot="description">
+                      You won't be able to revert this!
+                    </span>
+                  </Confirm>
+                </span>
+              </Row>
+            {/each}
+            <tr>
+              <td colspan="9">
+                <div class="buttonrow">
+                  <button on:click={() => addMed()}>
+                    <Icon.PlusSolid  size="20" color="#87cefa" />
+                  </button>
+                  <button on:click={() => saveMeds(meds, selected)}>
+                    <Icon.FloppyDiskSolid  size="20" color="#87cefa" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       {/if}
     </div>
@@ -183,9 +189,9 @@
           <label for="name">Name:</label><input type="text" id="name" placeholder="Name" />
         </div>
         <div class="row">
-          <label for="stock">Stock:</label><input type="number" step="0.5" id="stock" placeholder="0" />
           <label for="amount">Amount:</label><input type="number" step="0.5" id="amount" placeholder="0" />
           <label for="dosage">Dosage:</label><input type="number" step="0.5" id="dosage" placeholder="0" />
+          <label for="stock">Stock:</label><input type="number" step="0.5" id="stock" placeholder="0" />
         </div>
         <div class="buttonrow">
             <button type="submit" value="ok"><Icon.CheckSolid color="#87cefa"/></button>
@@ -194,7 +200,6 @@
       </form>
     </div>
   </Dialog>
-
 </main>
 
 <style>
@@ -323,11 +328,12 @@
     cursor: text;
     border: 1px solid lightskyblue;
     padding: 3px;
-    width: 40px;
+    width: 50px;
     font-size: 0.8em;
     justify-content: right;
     background-color: #212121;
     margin-right: 10px;
+    margin-left: 10px;
   }
 
   .dialog input#name {

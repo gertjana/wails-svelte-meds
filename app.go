@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-  // "fmt"
+	// "fmt"
 )
 
 // App struct
@@ -14,12 +14,12 @@ type App struct {
 }
 
 type Medication struct {
-	Name   string  `json:"name"`
-	Amount float64 `json:"amount"`
-	Unit   string  `json:"unit"`
-	Dosage float64 `json:"dosage"`
-	Stock  float64 `json:"stock"`
-  LastUpdated string `json:"last_updated"`
+	Name        string  `json:"name"`
+	Amount      float64 `json:"amount"`
+	Unit        string  `json:"unit"`
+	Dosage      float64 `json:"dosage"`
+	Stock       float64 `json:"stock"`
+	LastUpdated string  `json:"last_updated"`
 }
 
 var medications = make(map[string][]Medication, 0)
@@ -43,7 +43,7 @@ func (a *App) Load() {
 }
 
 func (a *App) Save(meds []Medication, name string) {
-  medications[name] = meds
+	medications[name] = meds
 
 	file, _ := json.MarshalIndent(medications, "", " ")
 	_ = ioutil.WriteFile(getFileLocation(), file, 0644)
@@ -65,12 +65,12 @@ func (a *App) UpdateStock(name string, med_name string, stock float64, date stri
 	for i, med := range medications[name] {
 		if med.Name == med_name {
 			medications[name][i].Stock = stock
-      medications[name][i].LastUpdated = date
+			medications[name][i].LastUpdated = date
 		}
 	}
 }
 
 func getFileLocation() string {
-	file_location, _ := os.UserHomeDir()
-	return file_location+ "/.meds/medications.json"
+	userdir, _ := os.UserHomeDir()
+	return userdir + "/.meds/medications.json"
 }
