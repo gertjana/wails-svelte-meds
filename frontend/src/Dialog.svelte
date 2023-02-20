@@ -4,24 +4,38 @@
 
   /**
    * Show the dialog with the given name
-   * @param name name of the dialog
+   * @param dialog_name name of the dialog
    * @param asModal if true, show as modal
    */
-  export const showDialog = (name: string, asModal: boolean) => {
-    dialogs[name][asModal ? "showModal" : "show"]();
+  export const showDialog = (dialog_name: string, asModal: boolean) => {
+    dialogs[dialog_name][asModal ? "showModal" : "show"]();
   }
 
-  export const closeDialog = (name: string) => {
-    dialogs[name].close();
+  /**
+   * Close the dialog with the given name
+   * @param dialog_name name of the dialog
+  */
+  export const closeDialog = (dialog_name: string) => {
+    dialogs[dialog_name].close();
   }
 
-
-  export const clearForm = (name: string) => {
-    (<HTMLFormElement>dialogs[name].querySelector("form")).reset();
+  /**
+   * Clears all forms in the dialog with the given name
+   * @param dialog_name name of the dialog
+  */
+  export const clearForm = (dialog_name: string) => {
+    let forms:HTMLFormElement[] = Array.from(dialogs[dialog_name].querySelectorAll("form")); 
+    forms.forEach(form => {
+      form.reset();
+    });
   }
 
-  export const ref = (name: string) => {
-    return dialogs[name];
+  /**
+   * Returns the dialog with the given name
+   * @param dialog_name name of the dialog
+  */
+  export const ref = (dialog_name: string) => {
+    return dialogs[dialog_name];
   } 
 </script>
 
