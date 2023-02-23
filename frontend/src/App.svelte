@@ -13,7 +13,7 @@
 </svelte:head>
 
 <script lang="ts">
-  import { GetNames, Medications, Save }  from '../wailsjs/go/main/App'
+  import { Medications, Save, GetUser, AddUser, GetUsers, SetUser }  from '../wailsjs/go/main/App'
   import type { Medication } from './Medication.svelte';
 
   import { null_to_empty } from 'svelte/internal';
@@ -22,15 +22,14 @@
   import * as Icon from 'svelte-awesome-icons';
 
   import Row from './Row.svelte';
-  import Confirm from './Confirm.svelte';
   import Dialog, { showDialog, closeDialog, clearForm, ref } from "./Dialog.svelte";
 
   let meds: Medication[] = [];
-  let names: string[] = [];
 
+  // helper functions
   let unsaved: boolean = false;
-  const markUnsaved = (un: boolean) => {
-    unsaved = un 
+  const markUnsaved = (u: boolean) => {
+    unsaved = u
   }
   
   let message: string = "";
@@ -38,44 +37,6 @@
     message = msg;
     if (msg != "") { setTimeout(() => { message = ""; }, 5000); }
   } 
-  displayMessage("Welcome to the Medication Overview page");
-
-  const deleteMed = (med: Medication) => {
-    meds = meds.filter(m => m.name != med.name);
-
-    markUnsaved(true);
-  }
-
-  const addMed = () => {
-    clearForm("medication-dialog");
-    showDialog("medication-dialog", true);
-  }
-
-  const editMed = (med: Medication) => {
-    console.log("EditMed");
-    showDialog("medication-dialog", true);
-    let currentDialog: HTMLDialogElement = ref("medication-dialog"); 
-    (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
-    (<HTMLInputElement>currentDialog.querySelector("#amount")).value =  med.amount.toString();
-    (<HTMLInputElement>currentDialog.querySelector("#dosage")).value = med.dosage.toString();
-    (<HTMLInputElement>currentDialog.querySelector("#stock")).value = med.stock.toString();
-  } 
-
-  const saveMeds = (meds: Medication[], selected: string) => {
-    Save(meds, selected).then(() => {
-      markUnsaved(false);
-      displayMessage("Saved");
-    });
-  }  
-
-  let selected: string;
-  GetNames().then(ns => {
-    names = ns;
-    selected = ns[0]
-    Medications(selected).then(ms => {
-      meds = ms.sort((a,b) => a.name.localeCompare(b.name))
-    });
-  });
 
   const toFloat = (value) => {
     if (value === "" || value === null || value === undefined) { return 0.0; }
@@ -91,6 +52,73 @@
     return -1;
 }
 
+
+  let users: string[] = [];
+  GetUsers().then(us => {
+    console.log(us);
+    users = us;
+  });
+
+  // main entry point
+  let currentUser: string;
+  GetUser().then(user => {
+    currentUser = user
+    Medications().then(ms => {
+      meds = ms.sort((a,b) => a.name.localeCompare(b.name))
+    });
+  });
+
+  displayMessage("Welcome to the Medication Overview page");
+
+
+  // CRUD for med's
+  const addMed = () => {
+    clearForm("medication-dialog");
+    showDialog("medication-dialog", true);
+  }
+
+  const editMed = (med: Medication) => {
+    console.log("EditMed");
+    showDialog("medication-dialog", true);
+    let currentDialog: HTMLDialogElement = ref("medication-dialog"); 
+    (<HTMLHeadingElement>currentDialog.querySelector("h3")).innerText = "Edit Medication";
+    (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
+    (<HTMLInputElement>currentDialog.querySelector("#amount")).value =  med.amount.toString();
+    (<HTMLInputElement>currentDialog.querySelector("#dosage")).value = med.dosage.toString();
+    (<HTMLInputElement>currentDialog.querySelector("#stock")).value = med.stock.toString();
+  } 
+
+  const saveMeds = (meds: Medication[]) => {
+    Save(meds).then(() => {
+      markUnsaved(false);
+      displayMessage("Saved");
+    });
+  }  
+
+  const deleteMed = (med: Medication) => {
+    let currentDialog: HTMLDialogElement = ref("delete-dialog"); 
+    (<HTMLSPANElement>currentDialog.querySelector("#name")).innerText = med.name;
+    (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
+    showDialog("delete-dialog", true);
+  }
+
+  // crud for users
+  const addUser = () => {
+    showDialog("user-dialog", true);
+  }
+
+  const setUser = (e) => {
+    console.log(e.target.value);
+    SetUser(e.target.value).then(() => {
+      currentUser = e.target.value;
+      console.log(currentUser);
+      Medications().then(ms => {
+        meds = ms.sort((a,b) => a.name.localeCompare(b.name))
+      });
+    })
+  }
+
+// form submits
   const handleSubmit = (d: string) => {
     closeDialog(d);
     let currentDialog: HTMLDialogElement = ref(d); 
@@ -104,14 +132,40 @@
     };
 
     let i: number = findIndexByProperty(meds, "name", med.name);
-    if (i >= 0) {
-      meds[i] = med;
-    } else {
-      meds.push(med);
-    }
+    if (i >= 0) { meds[i] = med; } 
+    else { meds.push(med); }
+
     markUnsaved(true);
 
+    //trigger binding
     meds = meds;
+  }
+
+  const handleSubmitUser = (d: string) => {
+    closeDialog(d);
+    let currentDialog: HTMLDialogElement = ref(d); 
+    let user = (<HTMLInputElement>currentDialog.querySelector('#user')).value;
+    AddUser(user).then(() => {
+      GetUsers().then(us => {
+        users = us;
+      });
+      currentUser = user;
+      Medications().then(ms => {
+        meds = ms.sort((a,b) => a.name.localeCompare(b.name))
+      });
+    })
+  }
+
+  const handleSubmitDelete = (d: string) => {
+    closeDialog(d);
+    let currentDialog: HTMLDialogElement = ref(d); 
+    let name = (<HTMLInputElement>currentDialog.querySelector('#name')).value;
+    
+    console.log(name)
+    meds = meds.filter(m => m.name != name);
+
+    console.log(meds)
+    markUnsaved(true);
   }
 </script>
 
@@ -121,11 +175,19 @@
       <div class="title">Medication Overview</div>
       <div class="modified">
         {#if unsaved}<Icon.StarOfLifeSolid size="10"/>{/if}</div>
-      <div class="selected">User: <span class="name">{selected}</span></div>
+      <div class="selected">
+        User:&nbsp;
+        <select bind:value={currentUser} on:change={(e) => setUser(e)}>
+          {#each users as user, i}
+            <option value={user}>{user}</option>
+          {/each}
+        </select>
+        <button on:click={addUser}><Icon.PlusSolid size=15 color="#87cefa" /></button>
+      </div>
       <div class="message" contenteditable="false"  bind:innerHTML={message}>messages appear here</div>
     </div>
     <div class="content">
-      {#if null_to_empty(meds).length == 0}
+      {#if null_to_empty(meds).length === 0 && null_to_empty(currentUser) === ""}
         <p>There are no medications for this name</p>
       {:else}
         <p>You can update the stock whenever you receive new medications<br/>
@@ -138,20 +200,12 @@
           </thead>
           <tbody>
             {#each meds as med, i}
-              <Row bind:value={med} selected={selected}>
+              <Row bind:value={med} selected={currentUser}>
                 <span class="row-buttons">
-                  <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
-                  <Confirm confirmTitle="Delete" cancelTitle="Cancel" let:confirm="{confirmThis}">
-                    <button on:click={() => confirmThis(deleteMed, med)}>
-                      <Icon.TrashCanSolid size="20" color="#87cefa" />
-                      </button> 
-                    <span slot="title">
-                      Delete this item?
-                    </span>
-                    <span slot="description">
-                      You won't be able to revert this!
-                    </span>
-                  </Confirm>
+                  <button alt="edit medication" on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
+                  <button alt="delete medication" on:click={() => deleteMed(med)}>
+                    <Icon.TrashCanSolid alt="bla" size="20" color="#87cefa" />
+                  </button> 
                 </span>
               </Row>
             {/each}
@@ -161,7 +215,7 @@
                   <button on:click={() => addMed()}>
                     <Icon.PlusSolid  size="20" color="#87cefa" />
                   </button>
-                  <button on:click={() => saveMeds(meds, selected)}>
+                  <button on:click={() => saveMeds(meds, currentUser)}>
                     <Icon.FloppyDiskSolid  size="20" color="#87cefa" />
                   </button>
                 </div>
@@ -175,15 +229,8 @@
 
 
   <Dialog name="medication-dialog">
-    <div
-      class="overlay"
-      in:fade="{{ duration: 200 }}"
-      out:fade="{{ delay: 200, duration: 200 }}"
-    ></div>
-    <div class="dialog">
-      <div class="header">
-        <h3>Add new Medication</h3>
-      </div>
+    <span slot="header">Add new medication</span>
+    <span slot="content">
       <form method="dialog" on:submit|preventDefault={() => handleSubmit("medication-dialog")}>
         <div class="row">
           <label for="name">Name:</label><input type="text" id="name" placeholder="Name" />
@@ -198,7 +245,38 @@
             <button type="button" on:click={() => closeDialog("medication-dialog")}><Icon.BanSolid color="#87cefa"/></button>
         </div>
       </form>
-    </div>
+    </span>
+  </Dialog>
+
+  <Dialog name="delete-dialog">
+    <span slot="header">Delete medication</span>
+    <span slot="content">
+      <form method="dialog" on:submit|preventDefault={() => handleSubmitDelete("delete-dialog")}>
+        <div class="row">
+            Are you sure you want to delete &nbsp;<span id="name"></span>?
+            <input type="hidden" id="name" />
+        </div>
+        <div class="buttonrow">
+            <button type="submit" value="ok"><Icon.CheckSolid color="#87cefa"/></button>
+            <button type="button" on:click={() => closeDialog("delete-dialog")}><Icon.BanSolid color="#87cefa"/></button>
+        </div>
+      </form>
+    </span>
+  </Dialog> 
+
+  <Dialog name="user-dialog">
+    <span slot="header">Add new User</span>
+    <span slot="content">
+    <form method="dialog" on:submit|preventDefault={() => handleSubmitUser("user-dialog")}>
+      <div class="row">
+        <label for="user">User:</label><input type="text" id="user" placeholder="Username" />
+      </div>
+      <div class="buttonrow">
+          <button type="submit" value="ok"><Icon.CheckSolid color="#87cefa"/></button>
+          <button type="button" on:click={() => closeDialog("user-dialog")}><Icon.BanSolid color="#87cefa"/></button>
+      </div>
+    </form>
+    </span>
   </Dialog>
 </main>
 
@@ -230,15 +308,15 @@
     text-align: left;
   }
 
-  .container .top-bar .selected .name {
-    font-weight: bold;
-    font-size: 1.2em;
-    padding-right: 20px;
-    color: lightskyblue;
-  }
   .container .top-bar .message {
     color: lightskyblue;
     width:500px;
+  }
+
+  .container .top-bar button {
+    background-color: grey;
+    border: none;
+    cursor: pointer;
   }
 
   .container .content {
@@ -292,20 +370,40 @@
     font-size: smaller;
   }
 
-  .dialog .header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  .container select {
+    display: inline-flex;
+    color: lightskyblue;
+    cursor: text;
+    border: 1px solid #87cefa;
+    padding: 3px;
+    font-size: 0.8em;
+    justify-content: right;
+    background-color: #212121;
+    margin-right: 10px;
+    margin-left: 10px;
+    -moz-appearance: none; 
+    -webkit-appearance: none; 
+    appearance: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%2387CEFA'><polygon points='0,0 100,0 50,50'/></svg>") no-repeat;
+    background-size: 12px;
+    background-position: calc(100% - 5px) center;
+    background-repeat: no-repeat;
+  }
+  form input {
+    width: 50px;
   }
 
-  .dialog .header button {
-    position: absolute;
-    right: -2px;
-    top: 0px;
+  form input#name, form input#user{
+    width: 200px;
   }
-      
-  .dialog .row {
+
+  .container button {
+    background-color: #212121;
+    border: none;
+    cursor: pointer;
+  }
+
+  form .row {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -313,7 +411,7 @@
     padding: 10px;
   }
 
-  .dialog .buttonrow {
+  form .buttonrow {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
@@ -322,29 +420,25 @@
     width:100%;
   }
 
-  .dialog input {
-    display: inline-flex;
-    color: lightskyblue;
-    cursor: text;
-    border: 1px solid lightskyblue;
-    padding: 3px;
-    width: 50px;
-    font-size: 0.8em;
-    justify-content: right;
-    background-color: #212121;
-    margin-right: 10px;
+  form .buttonrow button {
+    background-color: black;
+    border: none;
+    cursor: pointer;
     margin-left: 10px;
   }
 
-  .dialog input#name {
+  .top-bar select {
+    
     width: 200px;
   }
-  .dialog h3 {
-    margin-top: 0px;
+
+  .top-bar select option * {
+    background-color: black;
+    color: white;
   }
 
-  .dialog button {
-    background-color: black;
+  .top-bar button {
+    background-color: grey;
     border: none;
     cursor: pointer;
   }

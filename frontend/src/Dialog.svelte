@@ -54,17 +54,18 @@
 </script>
 
 <dialog id='{name}'>
-  <slot>
-    <p>Content here please</p>
-  </slot>
+  <div class="dialog">
+    <div class="header">
+      <h3><slot name="header">Header...</slot></h3>
+    </div>
+    <slot name="content">
+      <p>Content...</p>
+    </slot>
+  </div>
 </dialog>
 
 <style>
   dialog {
-    /* display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center; */
     padding: 10px;
     position: absolute;
     z-index: 999;
@@ -77,4 +78,15 @@
     border: 1px solid grey;
     color: white;
   }
+  .dialog .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dialog h3 {
+    margin-top: 0px;
+  }
+
 </style>
