@@ -1,4 +1,4 @@
-module changeme
+module github.com/gertjanassies/wails-svelte-meds
 
 go 1.18
 
