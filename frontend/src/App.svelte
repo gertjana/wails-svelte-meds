@@ -89,7 +89,7 @@
   } 
 
   const saveMeds = (meds: Medication[]) => {
-    Save(meds).then(() => {
+    Save(meds, currentUser).then(() => {
       markUnsaved(false);
       displayMessage("Saved");
     });
@@ -97,7 +97,7 @@
 
   const deleteMed = (med: Medication) => {
     let currentDialog: HTMLDialogElement = ref("delete-dialog"); 
-    (<HTMLSPANElement>currentDialog.querySelector("#name")).innerText = med.name;
+    (<HTMLSpanElement>currentDialog.querySelector("#name")).innerText = med.name;
     (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
     showDialog("delete-dialog", true);
   }
@@ -202,8 +202,8 @@
             {#each meds as med, i}
               <Row bind:value={med} selected={currentUser}>
                 <span class="row-buttons">
-                  <button alt="edit medication" on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
-                  <button alt="delete medication" on:click={() => deleteMed(med)}>
+                  <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
+                  <button on:click={() => deleteMed(med)}>
                     <Icon.TrashCanSolid alt="bla" size="20" color="#87cefa" />
                   </button> 
                 </span>
@@ -215,7 +215,7 @@
                   <button on:click={() => addMed()}>
                     <Icon.PlusSolid  size="20" color="#87cefa" />
                   </button>
-                  <button on:click={() => saveMeds(meds, currentUser)}>
+                  <button on:click={() => saveMeds(meds)}>
                     <Icon.FloppyDiskSolid  size="20" color="#87cefa" />
                   </button>
                 </div>
