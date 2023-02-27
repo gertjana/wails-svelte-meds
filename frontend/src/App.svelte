@@ -13,15 +13,14 @@
 </svelte:head>
 
 <script lang="ts">
-  import { Medications, Save, GetUser, AddUser, GetUsers, SetUser }  from '../wailsjs/go/main/App'
-  import type { Medication } from './Medication.svelte';
+  import { Medications, Save, GetUser, AddUser, GetUsers, SetUser, UpdateStock, MarkUnsaved }  from '../wailsjs/go/main/App'
+  import type { Medication } from './Medication.svelte'
+  import { stockToday, expiryDate, daysLeft } from './Medication.svelte';
 
   import { null_to_empty } from 'svelte/internal';
-  import { fly, fade } from 'svelte/transition';
 
   import * as Icon from 'svelte-awesome-icons';
 
-  import Row from './Row.svelte';
   import Dialog, { showDialog, closeDialog, clearForm, ref } from "./Dialog.svelte";
 
   let meds: Medication[] = [];
@@ -29,6 +28,7 @@
   // helper functions
   let unsaved: boolean = false;
   const markUnsaved = (u: boolean) => {
+    MarkUnsaved(u);
     unsaved = u
   }
   
@@ -78,7 +78,6 @@
   }
 
   const editMed = (med: Medication) => {
-    console.log("EditMed");
     showDialog("medication-dialog", true);
     let currentDialog: HTMLDialogElement = ref("medication-dialog"); 
     (<HTMLHeadingElement>currentDialog.querySelector("h3")).innerText = "Edit Medication";
@@ -89,7 +88,7 @@
   } 
 
   const saveMeds = (meds: Medication[]) => {
-    Save(meds, currentUser).then(() => {
+    Save(meds).then(() => {
       markUnsaved(false);
       displayMessage("Saved");
     });
@@ -100,6 +99,18 @@
     (<HTMLSpanElement>currentDialog.querySelector("#name")).innerText = med.name;
     (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
     showDialog("delete-dialog", true);
+  }
+
+  const addStock = (med: Medication) => {
+    showDialog("add-stock-dialog", true);
+  }
+
+  const updateStock = (med: Medication) => {
+    UpdateStock(med.name, med.stock, new Date().toDateString());  
+
+    // meds = meds
+
+    markUnsaved(true);
   }
 
   // crud for users
@@ -161,10 +172,21 @@
     let currentDialog: HTMLDialogElement = ref(d); 
     let name = (<HTMLInputElement>currentDialog.querySelector('#name')).value;
     
-    console.log(name)
     meds = meds.filter(m => m.name != name);
 
-    console.log(meds)
+    markUnsaved(true);
+  }
+
+  const handleSubmitAddStock = (d: string) => {
+    closeDialog(d);
+    let currentDialog: HTMLDialogElement = ref(d); 
+    let stock = toFloat((<HTMLInputElement>currentDialog.querySelector('#stock')).value);
+    let name = (<HTMLInputElement>currentDialog.querySelector('#name')).value;
+     let i: number = findIndexByProperty(meds, "name", name);
+    if (i >= 0) { meds[i].stock += stock; } 
+
+    meds = meds;
+
     markUnsaved(true);
   }
 </script>
@@ -195,27 +217,47 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th><th>Amount</th><th>Dosage</th><th>Stock</th><th>Last Updated</th><th class="spacer"></th><th>StockToday</th><th>Days Left</th><th>Expires</th>
+              <th>Name</th><th>Amount</th><th>Dosage</th><th>Stock</th><th>Last Updated</th><th></th><th>StockToday</th><th>Days Left</th><th>Expires</th>
             </tr>
           </thead>
           <tbody>
             {#each meds as med, i}
-              <Row bind:value={med} selected={currentUser}>
+            <tr>
+              <td>{med.name}</td>
+              <td>{med.amount} {med.unit}</td>
+              <td>{med.dosage}</td>
+              <td>
+                <input type="number" step="0.5" on:change={() => updateStock(med)} bind:value={med.stock}/>
+              </td>
+              <td>
+                <small><i contenteditable="false" bind:innerHTML={med.last_updated}>{med.last_updated}</i></small>
+              </td>
+              <td class="spacer">
                 <span class="row-buttons">
-                  <button on:click={() => editMed(med)}><Icon.PencilSolid size="20" color="#87cefa" /></button>
-                  <button on:click={() => deleteMed(med)}>
-                    <Icon.TrashCanSolid alt="bla" size="20" color="#87cefa" />
+                  <button class="tags" data-tooltip="Add stock (adds to current)" on:click={() => addStock(med)}>
+                    <Icon.PlusSolid size="20" color="#87cefa" />
+                  </button>
+                  <button class="tags" data-tooltip="Edit medication" on:click={() => editMed(med)}>
+                    <Icon.PencilSolid size="20" color="#87cefa" />
+                  </button>
+                  <button class="tags" data-tooltip="Delete medication" on:click={() => deleteMed(med)}>
+                    <Icon.TrashCanSolid size="20" color="#87cefa" />
                   </button> 
                 </span>
-              </Row>
+              </td>
+              
+              <td>{stockToday(med)}</td>
+              <td>{daysLeft(med)}</td>
+              <td>{expiryDate(med)}</td>
+            </tr>
             {/each}
             <tr>
               <td colspan="9">
                 <div class="buttonrow">
-                  <button on:click={() => addMed()}>
-                    <Icon.PlusSolid  size="20" color="#87cefa" />
-                  </button>
-                  <button on:click={() => saveMeds(meds)}>
+                    <button class="tags" data-tooltip="Add new medication" on:click={() => addMed()}>
+                      <Icon.PlusSolid  size="20" color="#87cefa" />
+                    </button>
+                  <button class="tags" data-tooltip="Save medications" on:click={() => saveMeds(meds)}>
                     <Icon.FloppyDiskSolid  size="20" color="#87cefa" />
                   </button>
                 </div>
@@ -278,6 +320,20 @@
     </form>
     </span>
   </Dialog>
+
+  <Dialog name="add-stock-dialog">
+    <span slot="header">Add stock</span>
+    <span slot="content">
+    <form method="dialog" on:submit|preventDefault={() => handleSubmitAddStock("add-stock-dialog")}>
+      <input type="hidden" id="name" placeholder="Name" />
+      <div class="row">
+        <label for="stock">Stock:</label><input type="number" step="0.5" id="stock" placeholder="0" />
+      </div>
+      <div class="buttonrow">
+          <button type="submit" value="ok"><Icon.CheckSolid color="#87cefa"/></button>
+          <button type="button" on:click={() => closeDialog("add-stock-dialog")}><Icon.BanSolid color="#87cefa"/></button>    
+      </span>
+  </Dialog>
 </main>
 
 <style>
@@ -331,10 +387,6 @@
     padding-right: 20px;
   }
 
-  .container .content .buttonrow button {
-    margin-left: 10px;
-  }
-
   .container button {
     background-color: #212121;
     border: none;
@@ -363,6 +415,30 @@
     background-color: grey;
   }
 
+  .content table td {
+        padding: 10px;
+        border: 1px solid grey;
+        text-align: left;
+        vertical-align: top;
+    }
+
+  .content table .spacer {
+    display: inline-flex;
+    border: none;
+    background-color: inherit;
+  }
+
+  .content table td input {
+    display: inline-flex;
+    color: white;
+    cursor: text;
+    border: 1px solid lightblue; 
+    padding: 3px;
+    width: 40px;
+    font-size: 0.8em;
+    justify-content: right;
+    background-color: #212121;
+  }
   .content p {
     text-align: left;
     margin: 10px;
@@ -442,4 +518,35 @@
     border: none;
     cursor: pointer;
   }
+
+.tags {
+  display: inline;
+  position: relative;
+}
+
+.tags:hover:after {
+  border-radius: 15px;
+  bottom: 35px;
+  color: #87cefa;
+  content: attr(data-tooltip);
+  right: -40px;
+  padding: 10px;
+  position: absolute;
+  z-index: 98;
+  min-width: 200px;
+  border: 1px solid #fff;
+  background-color: #212121;
+  font-size: 1.3em;
+}
+
+.tags:hover:before {
+  border: solid;
+  border-color: #333 transparent;
+  border-width: 0 6px 6px 6px;
+  bottom: -4px;
+  content: "";
+  left: 50%;
+  position: absolute;
+  z-index: 99;
+}
 </style>

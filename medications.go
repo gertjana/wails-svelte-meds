@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 )
 
 type Medication struct {
@@ -15,23 +15,22 @@ type Medication struct {
 }
 
 func (a *App) Load() {
-	file, _ := ioutil.ReadFile(getFileLocation(currentUser))
+	file, _ := os.ReadFile(getFileLocation(currentUser))
 
 	_ = json.Unmarshal([]byte(file), &medications)
 }
 
-func (a *App) Save(meds []Medication, name string) {
-	medications = meds
+func (a *App) Save(meds []Medication) {
 
 	file, _ := json.MarshalIndent(medications, "", " ")
-	_ = ioutil.WriteFile(getFileLocation(currentUser), file, 0644)
+	_ = os.WriteFile(getFileLocation(currentUser), file, 0644)
 }
 
 func (a *App) Medications() []Medication {
 	return medications
 }
 
-func (a *App) UpdateStock(name string, med_name string, stock float64, date string) {
+func (a *App) UpdateStock(med_name string, stock float64, date string) {
 	for i, med := range medications {
 		if med.Name == med_name {
 			medications[i].Stock = stock

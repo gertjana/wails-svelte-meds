@@ -44,8 +44,6 @@
   
   export let name: string = "";
   
-  // let dialog: HTMLDialogElement;
-
   onMount(() => {
     let dialog = <HTMLDialogElement> document.getElementById(name);
 		dialogs[name] = dialog;
@@ -74,6 +72,7 @@
     transform: translate(-50%, -50%);
     background: black;
     max-width: 500px;
+    min-width: 250px;
     border-radius: 1em;  
     border: 1px solid grey;
     color: white;

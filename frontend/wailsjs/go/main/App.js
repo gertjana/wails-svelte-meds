@@ -18,18 +18,22 @@ export function Load() {
   return window['go']['main']['App']['Load']();
 }
 
+export function MarkUnsaved(arg1) {
+  return window['go']['main']['App']['MarkUnsaved'](arg1);
+}
+
 export function Medications() {
   return window['go']['main']['App']['Medications']();
 }
 
-export function Save(arg1, arg2) {
-  return window['go']['main']['App']['Save'](arg1, arg2);
+export function Save(arg1) {
+  return window['go']['main']['App']['Save'](arg1);
 }
 
 export function SetUser(arg1) {
   return window['go']['main']['App']['SetUser'](arg1);
 }
 
-export function UpdateStock(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['UpdateStock'](arg1, arg2, arg3, arg4);
+export function UpdateStock(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateStock'](arg1, arg2, arg3);
 }
