@@ -2,14 +2,12 @@ import {test, expect, beforeAll, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import html from 'svelte-htm';
-
 import Dialog from '../Dialog.svelte';
 
-
-let dialog;
-const showDialog = vi.fn()
-const closeDialog = vi.fn()
-const handleSubmit = vi.fn()
+let dialog = "";
+const showDialog = vi.fn().mockImplementation((name, show) => { dialog = show ? "showModal" : "show" });
+const closeDialog = vi.fn().mockImplementation((name) => { dialog = "close" });
+const handleSubmit = vi.fn().mockImplementation((name, e) => { e.preventDefault()}); 
 
 beforeAll(() => {
   const dialog = render(html`
@@ -28,6 +26,7 @@ beforeAll(() => {
 });
 
 test("Dialog component slots", async () => {
+  console.log(dialog);
 
   const title = screen.getByText("This is the header");
   expect(title).toBeTruthy();
@@ -41,15 +40,23 @@ test("Dialog buttons", async () => {
   
   const user = userEvent.setup();
 
+  // open dialog
   const showButton = screen.getByText("Show Dialog");
   await user.click(showButton);
   expect(showDialog).toHaveBeenCalledOnce();
 
+  expect(dialog).toBe("showModal");
+
+  // submit dialog
+  const submitButton = screen.getByText("submit");
+  await user.click(submitButton);
+  expect(handleSubmit).toHaveBeenCalledOnce(); 
+
+  // close dialog
   const closeButton = screen.getByText("cancel");
   await user.click(closeButton);
   expect(closeDialog).toHaveBeenCalledOnce();
 
-  const submitButton = screen.getByText("submit");
-  await user.click(submitButton);
-  expect(handleSubmit).toHaveBeenCalledOnce(); 
+  expect(dialog).toBe("close");
+
 });
