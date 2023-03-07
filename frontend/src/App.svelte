@@ -13,9 +13,9 @@
 </svelte:head>
 
 <script lang="ts">
-  import { Medications, Save, GetUser, AddUser, GetUsers, SetUser, UpdateStock, MarkUnsaved }  from '../wailsjs/go/main/App'
+  import { GetMedications, Save, GetUser, AddUser, GetUsers, SetUser, UpdateStock, MarkUnsaved, DeleteMed }  from '../wailsjs/go/main/App'
   import type { Medication } from './Medication.svelte'
-  import { stockToday, expiryDate, daysLeft } from './Medication.svelte';
+  import Medication, { stockToday, expiryDate, daysLeft } from './Medication.svelte';
 
   import { null_to_empty } from 'svelte/internal';
 
@@ -55,7 +55,6 @@
 
   let users: string[] = [];
   GetUsers().then(us => {
-    console.log(us);
     users = us;
   });
 
@@ -63,8 +62,8 @@
   let currentUser: string;
   GetUser().then(user => {
     currentUser = user
-    Medications().then(ms => {
-      meds = ms.sort((a,b) => a.name.localeCompare(b.name))
+    GetMedications().then(ms => {
+      meds = ms
     });
   });
 
@@ -94,7 +93,7 @@
     });
   }  
 
-  const deleteMed = (med: Medication) => {
+  const deleteMedDialog = (med: Medication) => {
     let currentDialog: HTMLDialogElement = ref("delete-dialog"); 
     (<HTMLSpanElement>currentDialog.querySelector("#name")).innerText = med.name;
     (<HTMLInputElement>currentDialog.querySelector("#name")).value = med.name;
@@ -122,9 +121,8 @@
     console.log(e.target.value);
     SetUser(e.target.value).then(() => {
       currentUser = e.target.value;
-      console.log(currentUser);
-      Medications().then(ms => {
-        meds = ms.sort((a,b) => a.name.localeCompare(b.name))
+      GetMedications().then(ms => {
+        meds = ms
       });
     })
   }
@@ -161,7 +159,7 @@
         users = us;
       });
       currentUser = user;
-      Medications().then(ms => {
+      GetMedications().then(ms => {
         meds = ms.sort((a,b) => a.name.localeCompare(b.name))
       });
     })
@@ -174,6 +172,9 @@
     
     meds = meds.filter(m => m.name != name);
 
+    DeleteMed(name).then(() => {
+      displayMessage("Deleted "+name);
+    });
     markUnsaved(true);
   }
 
@@ -221,7 +222,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each meds as med, i}
+            {#each meds as med (med.name)}
             <tr>
               <td>{med.name}</td>
               <td>{med.amount} {med.unit}</td>
@@ -240,7 +241,7 @@
                   <button class="tags" data-tooltip="Edit medication" on:click={() => editMed(med)}>
                     <Icon.PencilSolid size="20" color="#87cefa" />
                   </button>
-                  <button class="tags" data-tooltip="Delete medication" on:click={() => deleteMed(med)}>
+                  <button class="tags" data-tooltip="Delete medication" on:click={() => deleteMedDialog(med)}>
                     <Icon.TrashCanSolid size="20" color="#87cefa" />
                   </button> 
                 </span>

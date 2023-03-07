@@ -26,8 +26,16 @@ func (a *App) Save(meds []Medication) {
 	_ = os.WriteFile(getFileLocation(currentUser), file, 0644)
 }
 
-func (a *App) Medications() []Medication {
+func (a *App) GetMedications() []Medication {
 	return medications
+}
+
+func (a *App) DeleteMed(name string) {
+	for i, med := range medications {
+		if med.Name == name {
+			medications = append(medications[:i], medications[i+1:]...)
+		}
+	}
 }
 
 func (a *App) UpdateStock(med_name string, stock float64, date string) {

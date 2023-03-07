@@ -34,7 +34,6 @@ func (a *App) GetUsers() []string {
 	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/.meds", userdir))
 	var users []string
 	for _, file := range files {
-		// fmt.Println(file.Name())
 		if r.MatchString(file.Name()) {
 			users = append(users, r.FindStringSubmatch(file.Name())[1])
 		}

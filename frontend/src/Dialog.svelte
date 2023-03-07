@@ -8,7 +8,7 @@
    * @param asModal if true, show as modal
    */
   export const showDialog = (dialog_name: string, asModal: boolean) => {
-    dialogs[dialog_name][asModal ? "showModal" : "show"];
+    dialogs[dialog_name][asModal ? "showModal" : "show"]();
   }
 
   /**

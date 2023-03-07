@@ -4,6 +4,10 @@ import {main} from '../models';
 
 export function AddUser(arg1:string):Promise<void>;
 
+export function DeleteMed(arg1:string):Promise<void>;
+
+export function GetMedications():Promise<Array<main.Medication>>;
+
 export function GetUser():Promise<string>;
 
 export function GetUsers():Promise<Array<string>>;
@@ -11,8 +15,6 @@ export function GetUsers():Promise<Array<string>>;
 export function Load():Promise<void>;
 
 export function MarkUnsaved(arg1:boolean):Promise<void>;
-
-export function Medications():Promise<Array<main.Medication>>;
 
 export function Save(arg1:Array<main.Medication>):Promise<void>;
 

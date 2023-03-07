@@ -6,6 +6,14 @@ export function AddUser(arg1) {
   return window['go']['main']['App']['AddUser'](arg1);
 }
 
+export function DeleteMed(arg1) {
+  return window['go']['main']['App']['DeleteMed'](arg1);
+}
+
+export function GetMedications() {
+  return window['go']['main']['App']['GetMedications']();
+}
+
 export function GetUser() {
   return window['go']['main']['App']['GetUser']();
 }
@@ -20,10 +28,6 @@ export function Load() {
 
 export function MarkUnsaved(arg1) {
   return window['go']['main']['App']['MarkUnsaved'](arg1);
-}
-
-export function Medications() {
-  return window['go']['main']['App']['Medications']();
 }
 
 export function Save(arg1) {
