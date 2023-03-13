@@ -15,7 +15,7 @@
 <script lang="ts">
   import { GetMedications, Save, GetUser, AddUser, GetUsers, SetUser, UpdateStock, MarkUnsaved, DeleteMed }  from '../wailsjs/go/main/App'
   import type { Medication } from './Medication.svelte'
-  import Medication, { stockToday, expiryDate, daysLeft } from './Medication.svelte';
+  import { stockToday, expiryDate, daysLeft } from './Medication.svelte';
 
   import { null_to_empty } from 'svelte/internal';
 
